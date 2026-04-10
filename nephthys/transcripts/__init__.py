@@ -4,6 +4,7 @@ from typing import Type
 from nephthys.transcripts.transcript import Transcript
 from nephthys.transcripts.transcripts.construct import Construct
 from nephthys.transcripts.transcripts.flavortown import Flavortown
+from nephthys.transcripts.transcripts.hackanomous import Hackanomous
 from nephthys.transcripts.transcripts.hctg import Hctg
 from nephthys.transcripts.transcripts.identity import Identity
 from nephthys.transcripts.transcripts.jumpstart import Jumpstart
@@ -15,6 +16,7 @@ from nephthys.transcripts.transcripts.summer_of_making import SummerOfMaking
 transcripts: List[Type[Transcript]] = [
     Identity,
     SummerOfMaking,
+    Hackanomous,
     Flavortown,
     Midnight,
     Construct,

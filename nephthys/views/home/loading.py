@@ -14,10 +14,5 @@ def get_loading_view(home_type: str):
                     "text": ":hourglass_flowing_sand: loading...",
                 },
             },
-            {
-                "type": "image",
-                "image_url": f"{env.base_url}/public/loading.gif",
-                "alt_text": "Loading...",
-            },
         ],
     }

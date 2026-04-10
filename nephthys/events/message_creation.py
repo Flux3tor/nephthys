@@ -1,4 +1,5 @@
 import logging
+import random
 import string
 from datetime import datetime
 from typing import Any
@@ -9,8 +10,6 @@ from prometheus_client import Histogram
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web.async_client import AsyncWebClient
 
-from nephthys.events.message.send_backend_message import backend_message_blocks
-from nephthys.events.message.send_backend_message import backend_message_fallback_text
 from nephthys.events.message.send_backend_message import send_backend_message
 from nephthys.macros import run_macro
 from nephthys.utils.env import env
@@ -183,25 +182,7 @@ async def handle_new_question(
     ):
         title = await generate_ticket_title(text)
 
-    async with perf_timer(
-        "AI category tag generation", TICKET_CATEGORY_GENERATION_DURATION
-    ):
-        category_tag_id = await generate_category_tag(text)
-
-    if category_tag_id:
-        blocks = await backend_message_blocks(
-            author_user_id=author_id,
-            msg_ts=event["ts"],
-            past_tickets=past_tickets,
-            current_category_tag_id=category_tag_id,
-        )
-
-        await client.chat_update(
-            channel=env.slack_ticket_channel,
-            ts=ticket_message_ts,
-            text=backend_message_fallback_text(author_id, text),
-            blocks=blocks,
-        )
+    # Category tags disabled
 
     user_facing_message_ts = user_facing_message["ts"]
     if not user_facing_message_ts:
@@ -223,15 +204,11 @@ async def handle_new_question(
             },
         }
 
-        if category_tag_id:
-            ticket_data["categoryTag"] = {"connect": {"id": category_tag_id}}
+        # Category tags disabled
 
         ticket = await env.db.ticket.create(ticket_data)
 
-        if not category_tag_id:
-            logging.warning(
-                f"Failed to generate category tag for ticket_id={ticket.id}"
-            )
+        # Category tags disabled
 
     try:
         await client.reactions_add(
@@ -308,8 +285,27 @@ async def send_user_facing_message(
     )
 
 
+async def on_app_mention(event: Dict[str, Any], client: AsyncWebClient):
+    """Handle the bot mention easter egg."""
+    quotes = [
+        "I'm not a bot, I'm just a bunch of very unorganized code :pf:",
+        "Error 404: Funny response not found. Just kidding, I'm hilarious",
+        "Did you know that #hackanomous is a YSWS by Rohan? :rohanpet: ",
+        "The mac mini which self hosted me can run 24/7 without any downtime (hopefully :disappointed:",
+        "If I have a a ping for every time I was mentioned, I'd have... uhh well, a lot of pings :why:",
+        "My hobbies include processing events and daydreaming about uhh idk :idk:",
+        "I'm not lazy, I'm just on energy-saving mode :good-night: :hehee: /hj",
+    ]
+    await client.chat_postMessage(
+        channel=event["channel"],
+        text=random.choice(quotes),
+        thread_ts=event.get("thread_ts") or event["ts"],
+    )
+
+
 async def on_message(event: Dict[str, Any], client: AsyncWebClient):
-    """
+    """Entry point for all message events in the help channel.
+
     Handle incoming messages in Slack.
     """
     if "subtype" in event and event["subtype"] not in ALLOWED_SUBTYPES:
@@ -318,14 +314,14 @@ async def on_message(event: Dict[str, Any], client: AsyncWebClient):
         logging.info(f"Ignoring bot message from {event['bot_id']}")
         return
 
-    async with perf_timer("DB user lookup"):
+    async with perf_timer("DB user lookup"):  # type: ignore
         db_user = await env.db.user.find_first(
             where={"slackId": event.get("user", "unknown")}
         )
 
     # Messages sent in a thread with the "send to channel" checkbox checked
     if event.get("subtype") == "thread_broadcast" and not (db_user and db_user.helper):
-        async with perf_timer("Handling message sent to channel"):
+        async with perf_timer("Handling message sent to channel"):  # type: ignore
             await handle_message_sent_to_channel(event, client)
 
     if event.get("thread_ts"):

@@ -95,6 +95,11 @@ class Transcript(BaseModel):
         default="", description="Message to be sent when the identity macro is used"
     )
 
+    redirect_macro: str = Field(
+        default="Oh! I will now tell the big boss people to come help you! (usergroup)",
+        description="Message to be sent when the redirect macro is used",
+    )
+
     ship_cert_queue_macro: str | None = Field(
         default=None,
         description="Message to be sent when the ship cert queue macro is used (only applies to Flavortown and SoM)",

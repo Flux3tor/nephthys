@@ -9,7 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 from starlette.applications import Starlette
 
-from nephthys.tasks.close_stale import close_stale_tickets
+from nephthys.tasks.close_stale import check_unclosed_tickets
 from nephthys.tasks.daily_stats import send_daily_stats
 from nephthys.tasks.fulfillment_reminder import send_fulfillment_reminder
 from nephthys.tasks.update_helpers import update_helpers
@@ -57,7 +57,7 @@ async def main(_app: Starlette):
         )
 
         scheduler.add_job(
-            close_stale_tickets,
+            check_unclosed_tickets,
             "interval",
             hours=1,
             max_instances=1,

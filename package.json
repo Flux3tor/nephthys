@@ -1,0 +1,10 @@
+{
+  "name": "nephthys",
+  "private": true,
+  "description": "Convenience npm scripts for running Nephthys (Python) in dev and deploy modes",
+  "scripts": {
+    "dev": "bash scripts/dev-with-db.sh",
+    "deploy": "ENVIRONMENT=production uv run nephthys",
+    "start": "ENVIRONMENT=production uv run nephthys"
+  }
+}

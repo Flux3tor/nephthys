@@ -1,7 +1,7 @@
 {
     "display_information": {
-        "name": "helper heidi",
-        "description": "making support teams run smoothly (and my partner proud)",
+        "name": "Hackanomoly",
+        "description": "making support teams run smoothly",
         "background_color": "#c47600"
     },
     "features": {
@@ -11,19 +11,9 @@
             "messages_tab_read_only_enabled": true
         },
         "bot_user": {
-            "display_name": "helper heidi",
+            "display_name": "Hackanomoly",
             "always_online": false
         },
-        "slash_commands": [
-          {
-            "command": "/dm-magic-link",
-            "url": "https://nephthys.hackclub.com/slack/events",
-            "description": "Send a magic login link to a user",
-            "usage_hint": "<@user>",
-            "should_escape": true
-          }
-        ]
-    },
     "oauth_config": {
         "scopes": {
             "user": [
@@ -53,7 +43,7 @@
     },
     "settings": {
         "event_subscriptions": {
-            "request_url": "https://nephthys.hackclub.com/slack/events",
+            "request_url": "https://hackanomonly.lamyn.tech/slack/events",
             "bot_events": [
                 "app_home_opened",
                 "member_joined_channel",
@@ -64,8 +54,8 @@
         },
         "interactivity": {
             "is_enabled": true,
-            "request_url": "https://nephthys.hackclub.com/slack/events",
-            "message_menu_options_url": "https://nephthys.hackclub.com/slack/events"
+            "request_url": "https://hackanomonly.lamyn.tech/slack/events",
+            "message_menu_options_url": "https://hackanomonly.lamyn.tech/slack/events"
         },
         "org_deploy_enabled": false,
         "socket_mode_enabled": false,

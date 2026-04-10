@@ -16,16 +16,22 @@ from nephthys.utils.env import env
 
 async def send_heartbeat(heartbeat: str, messages: list[str] = []):
     if env.slack_heartbeat_channel:
-        msg = await env.slack_client.chat_postMessage(
-            channel=env.slack_heartbeat_channel, text=heartbeat
-        )
+        try:
+            msg = await env.slack_client.chat_postMessage(
+                channel=env.slack_heartbeat_channel, text=heartbeat
+            )
+        except Exception:
+            return
         if messages:
             for message in messages:
-                await env.slack_client.chat_postMessage(
-                    channel=env.slack_heartbeat_channel,
-                    text=message,
-                    thread_ts=msg["ts"],
-                )
+                try:
+                    await env.slack_client.chat_postMessage(
+                        channel=env.slack_heartbeat_channel,
+                        text=message,
+                        thread_ts=msg["ts"],
+                    )
+                except Exception:
+                    pass
 
 
 def parse_level_name(level_name: str | int) -> int:

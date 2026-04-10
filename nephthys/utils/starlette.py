@@ -62,6 +62,7 @@ async def root(req: Request):
 
 STATIC_DIR = Path(Path.cwd() / "nephthys" / "public")
 
+
 app = Starlette(
     debug=True if env.environment != "production" else False,
     routes=[

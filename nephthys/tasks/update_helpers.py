@@ -1,10 +1,28 @@
 import logging
 
+from slack_sdk.errors import SlackApiError
+
 from nephthys.utils.env import env
+from nephthys.utils.logging import send_heartbeat
 
 
 async def update_helpers():
-    res = await env.slack_client.conversations_members(channel=env.slack_bts_channel)
+    try:
+        res = await env.slack_client.conversations_members(
+            channel=env.slack_bts_channel
+        )
+    except SlackApiError as e:
+        err = e.response.get("error")
+        if err == "missing_scope":
+            await send_heartbeat(
+                "Missing Slack scope to read BTS channel members (need groups:read). Skipping helper sync.",
+                messages=[
+                    "provided scopes do not include groups:read",
+                    "Set bot scopes per manifest and reinstall the app",
+                ],
+            )
+            return
+        raise
     team_ids = res.get("members", [])
 
     # Get bot user ID to exclude from helpers

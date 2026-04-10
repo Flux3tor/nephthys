@@ -4,6 +4,7 @@ from nephthys.macros.faq import FAQ
 from nephthys.macros.fraud import Fraud
 from nephthys.macros.hello_world import HelloWorld
 from nephthys.macros.identity import Identity
+from nephthys.macros.redirect import Redirect
 from nephthys.macros.reopen import Reopen
 from nephthys.macros.resolve import Resolve
 from nephthys.macros.shipcertqueue import ShipCertQueue
@@ -14,6 +15,7 @@ from nephthys.macros.trigger_fulfillment_reminder import FulfillmentReminder
 from nephthys.macros.types import Macro
 from nephthys.utils.env import env
 from nephthys.utils.logging import send_heartbeat
+from nephthys.utils.ticket_methods import delete_message
 from prisma.enums import TicketStatus
 from prisma.models import Ticket
 from prisma.models import User
@@ -31,6 +33,7 @@ macro_list: list[type[Macro]] = [
     DailyStats,
     FulfillmentReminder,
     Shipwrights,
+    Redirect,
 ]
 
 macros = [macro() for macro in macro_list]
@@ -59,9 +62,16 @@ async def run_macro(
             new_kwargs = kwargs.copy()
             new_kwargs["text"] = text
             await macro.run(ticket, helper, **new_kwargs)
-            await env.slack_client.chat_delete(
-                channel=env.slack_help_channel, ts=macro_ts, token=env.slack_user_token
-            )
+            try:
+                await env.slack_client.chat_delete(
+                    channel=env.slack_help_channel,
+                    ts=macro_ts,
+                    token=env.slack_user_token,
+                    as_user=True,
+                )
+            except Exception:
+                # If we can't delete the macro message, it's not the end of the world
+                pass
             return True
 
     await error_msg(f"`?{name}` is not a valid macro.")

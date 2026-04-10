@@ -88,6 +88,9 @@ class Environment:
             ),
             Transcript(),
         )
+        faq_link_override = os.environ.get("FAQ_LINK")
+        if faq_link_override:
+            self.transcript.faq_link = faq_link_override
 
         self.slack_client = AsyncWebClient(token=self.slack_bot_token)
         self.ai_client = (
@@ -101,6 +104,15 @@ class Environment:
 
         # Cache whether the user token has workspace admin privileges
         self._workspace_admin_available: bool | Literal["unchecked"] = "unchecked"
+        self._bot_user_id: str | None = None
+
+    async def get_bot_user_id(self) -> str:
+        """Get the bot's user ID."""
+        if self._bot_user_id:
+            return self._bot_user_id
+        auth_test = await self.slack_client.auth_test()
+        self._bot_user_id = auth_test["user_id"]
+        return self._bot_user_id  # type: ignore
 
     async def workspace_admin_available(self) -> bool:
         """Check if the provided user token has workspace admin privileges."""
@@ -120,6 +132,9 @@ class Environment:
             raise ValueError("Failed to get user info from Slack API.")
         self._workspace_admin_available = user_info["is_admin"]
         return user_info["is_admin"]
+
+    async def refresh_bot_token(self) -> bool:
+        return False
 
 
 env = Environment()

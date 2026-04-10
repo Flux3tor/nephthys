@@ -8,46 +8,11 @@ async def backend_message_blocks(
     author_user_id: str,
     msg_ts: str,
     past_tickets: int,
-    current_category_tag_id: int | None = None,
     reopened_by: User | None = None,
 ) -> list[dict]:
     thread_url = f"https://hackclub.slack.com/archives/{env.slack_help_channel}/p{msg_ts.replace('.', '')}"
-    if current_category_tag_id is not None:
-        options = [
-            {
-                "text": {
-                    "type": "plain_text",
-                    "text": tag.name,
-                },
-                "value": f"{tag.id}",
-            }
-            for tag in await env.db.categorytag.find_many()
-        ]
-        initial_option = [
-            option
-            for option in options
-            if option["value"] == f"{current_category_tag_id}"
-        ][0]
-    else:
-        initial_option = None
-    category_tags_dropdown = {
-        "type": "input",
-        "label": {"type": "plain_text", "text": "Category tag", "emoji": True},
-        "element": {
-            "type": "external_select",
-            "action_id": "category-tag-list",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Which category tag fits?",
-            },
-            "min_query_length": 0,
-        },
-    }
-    if initial_option:
-        category_tags_dropdown["element"]["initial_option"] = initial_option
 
     return [
-        category_tags_dropdown,
         {
             "type": "input",
             "label": {"type": "plain_text", "text": "Team tags", "emoji": True},
@@ -92,7 +57,6 @@ async def send_backend_message(
     description: str,
     past_tickets: int,
     client: AsyncWebClient,
-    current_category_tag_id: int | None = None,
     reopened_by: User | None = None,
     display_name: str | None = None,
     profile_pic: str | None = None,
@@ -103,7 +67,7 @@ async def send_backend_message(
         channel=env.slack_ticket_channel,
         text=backend_message_fallback_text(author_user_id, description, reopened_by),
         blocks=await backend_message_blocks(
-            author_user_id, msg_ts, past_tickets, current_category_tag_id, reopened_by
+            author_user_id, msg_ts, past_tickets, reopened_by
         ),
         username=display_name,
         icon_url=profile_pic,

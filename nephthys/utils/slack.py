@@ -6,7 +6,6 @@ from slack_bolt.async_app import AsyncApp
 from slack_bolt.context.ack.async_ack import AsyncAck
 from slack_sdk.web.async_client import AsyncWebClient
 
-from nephthys.actions.assign_category_tag import assign_category_tag_callback
 from nephthys.actions.assign_team_tag import assign_team_tag_callback
 from nephthys.actions.create_team_tag import create_team_tag_btn_callback
 from nephthys.actions.create_team_tag import create_team_tag_view_callback
@@ -17,9 +16,9 @@ from nephthys.events.app_home_opened import on_app_home_opened
 from nephthys.events.app_home_opened import open_app_home
 from nephthys.events.channel_join import channel_join
 from nephthys.events.channel_left import channel_left
+from nephthys.events.message_creation import on_app_mention
 from nephthys.events.message_creation import on_message
 from nephthys.events.message_deletion import on_message_deletion
-from nephthys.options.category_tags import get_category_tags
 from nephthys.options.team_tags import get_team_tags
 from nephthys.utils.env import env
 from nephthys.utils.performance import perf_timer
@@ -37,11 +36,16 @@ async def handle_message(event: Dict[str, Any], client: AsyncWebClient):
     ) or event.get("subtype") == "message_deleted"
 
     if event["channel"] == env.slack_help_channel:
-        async with perf_timer("Processing message event (total time)"):
+        async with perf_timer("Processing message event (total time)"):  # type: ignore
             if is_message_deletion:
                 await on_message_deletion(event, client)
             else:
                 await on_message(event, client)
+
+
+@app.event("app_mention")
+async def handle_app_mention(event: Dict[str, Any], client: AsyncWebClient):
+    await on_app_mention(event, client)
 
 
 @app.action("mark_resolved")
@@ -61,10 +65,7 @@ async def handle_team_tag_list_options(ack: AsyncAck, payload: dict):
     await ack(options=tags)
 
 
-@app.options("category-tag-list")
-async def handle_category_tag_list_options(ack: AsyncAck, payload: dict):
-    tags = await get_category_tags(payload)
-    await ack(options=tags)
+# category tags disabled
 
 
 @app.event("app_home_opened")
@@ -117,11 +118,7 @@ async def assign_team_tag(ack: AsyncAck, body: Dict[str, Any], client: AsyncWebC
     await assign_team_tag_callback(ack, body, client)
 
 
-@app.action("category-tag-list")
-async def assign_category_tag(
-    ack: AsyncAck, body: Dict[str, Any], client: AsyncWebClient
-):
-    await assign_category_tag_callback(ack, body, client)
+# category tags disabled
 
 
 @app.command("/dm-magic-link")

@@ -6,128 +6,46 @@ from datetime import timezone
 
 from slack_sdk.errors import SlackApiError
 
-from nephthys.actions.resolve import resolve
 from nephthys.utils.env import env
 from nephthys.utils.logging import send_heartbeat
 from prisma.enums import TicketStatus
 
 
-async def get_is_stale(ts: str, max_retries: int = 3) -> bool:
-    for attempt in range(max_retries):
-        try:
-            replies = await env.slack_client.conversations_replies(
-                channel=env.slack_help_channel, ts=ts, limit=1000
-            )
-            last_reply = (
-                replies.get("messages", [])[-1] if replies.get("messages") else None
-            )
-            if not last_reply:
-                logging.error("No replies found - this should never happen")
-                await send_heartbeat(f"No replies found for ticket {ts}")
-                return False
-            return (
-                datetime.now(tz=timezone.utc)
-                - datetime.fromtimestamp(float(last_reply["ts"]), tz=timezone.utc)
-            ) > timedelta(days=3)
-        except SlackApiError as e:
-            if e.response["error"] == "ratelimited":
-                retry_after = int(e.response.headers.get("Retry-After", 1))
-                # Exponential backoff: wait longer on each retry
-                wait_time = retry_after * (2**attempt)
-                logging.warning(
-                    f"Rate limited while fetching replies for ticket {ts}. "
-                    f"Attempt {attempt + 1}/{max_retries}. Retrying after {wait_time} seconds."
-                )
-                await asyncio.sleep(wait_time)
-                if attempt == max_retries - 1:
-                    logging.error(f"Max retries exceeded for ticket {ts}")
-                    return False
-            if e.response["error"] == "thread_not_found":
-                logging.warning(
-                    f"Thread not found for ticket {ts}. This might be a deleted thread."
-                )
-                await send_heartbeat(f"Thread not found for ticket {ts}.")
-                maintainer_user = await env.db.user.find_unique(
-                    # where={"slackId": env.slack_maintainer_id}
-                    where={"slackId": "U054VC2KM9P"}
-                )
-                if maintainer_user:
-                    await env.db.ticket.update(
-                        where={"msgTs": ts},
-                        data={
-                            "status": TicketStatus.CLOSED,
-                            "closedAt": datetime.now(),
-                            "closedBy": {"connect": {"id": maintainer_user.id}},
-                        },
-                    )
-                else:
-                    await env.db.ticket.update(
-                        where={"msgTs": ts},
-                        data={
-                            "status": TicketStatus.CLOSED,
-                            "closedAt": datetime.now(),
-                        },
-                    )
-                return False
-            else:
-                logging.error(
-                    f"Error fetching replies for ticket {ts}: {e.response['error']}"
-                )
-                await send_heartbeat(
-                    f"Error fetching replies for ticket {ts}: {e.response['error']}"
-                )
-                return False
-    return False
-
-
-async def close_stale_tickets():
+async def check_unclosed_tickets():
     """
-    Closes tickets that have been open for more than 3 days.
-    This task is intended to be run periodically.
+    Checks for tickets that have been open for more than 24 hours.
+    If any exist, pings the user group in the heartbeat channel.
     """
-
-    logging.info("Closing stale tickets...")
-    await send_heartbeat("Closing stale tickets...")
 
     try:
-        tickets = await env.db.ticket.find_many(
+        # Get tickets that are not closed
+        unclosed_tickets = await env.db.ticket.find_many(
             where={"NOT": [{"status": TicketStatus.CLOSED}]},
-            include={"openedBy": True, "assignedTo": True},
         )
-        stale = 0
 
-        # Process tickets in batches to avoid overwhelming the API
-        batch_size = 10
-        for i in range(0, len(tickets), batch_size):
-            batch = tickets[i : i + batch_size]
-            logging.info(
-                f"Processing batch {i // batch_size + 1}/{(len(tickets) + batch_size - 1) // batch_size}"
-            )
+        tickets_over_24h = []
+        now = datetime.now(tz=timezone.utc)
 
-            for ticket in batch:
-                await asyncio.sleep(1.2)  # Rate limiting delay
+        for ticket in unclosed_tickets:
+            # Slack timestamps are in seconds
+            ticket_time = datetime.fromtimestamp(float(ticket.msgTs), tz=timezone.utc)
+            if (now - ticket_time) > timedelta(hours=24):
+                tickets_over_24h.append(ticket)
 
-                if await get_is_stale(ticket.msgTs):
-                    stale += 1
-                    resolver = (
-                        ticket.assignedToId
-                        if ticket.assignedToId
-                        else ticket.openedById
-                    )
-                    await resolve(
-                        ticket.msgTs,
-                        resolver,  # type: ignore (this is explicitly fetched in the db call)
-                        env.slack_client,
-                        stale=True,
-                    )
+        if tickets_over_24h:
+            user_group_id = env.slack_user_group
+            user_group_ping = f"<!subteam^{user_group_id}>"
+            message = f"{user_group_ping} There are {len(tickets_over_24h)} tickets that have been open for more than 24 hours!"
 
-            # Longer delay between batches
-            if i + batch_size < len(tickets):
-                await asyncio.sleep(5)
+            # Ping in heartbeat channel
+            if env.slack_heartbeat_channel:
+                await env.slack_client.chat_postMessage(
+                    channel=env.slack_heartbeat_channel,
+                    text=message
+                )
 
-        await send_heartbeat(f"Closed {stale} stale tickets.")
+            logging.info(f"Found {len(tickets_over_24h)} tickets over 24 hours. Pinged heartbeat channel.")
 
-        logging.info(f"Closed {stale} stale tickets.")
     except Exception as e:
-        logging.error(f"Error closing stale tickets: {e}")
-        await send_heartbeat(f"Error closing stale tickets: {e}")
+        logging.error(f"Error checking unclosed tickets: {e}")
+        await send_heartbeat(f"Error checking unclosed tickets: {e}")
