@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -o allexport
+  source .env
+  set +o allexport
 fi
+
+: "${DATABASE_URL:=postgresql://postgres:postgres@localhost:5432/nephthys}"
 
 echo "[dev-with-db] Starting Nephthys in dev mode with local Postgres"
 
