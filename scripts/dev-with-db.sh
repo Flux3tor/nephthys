@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
 
 echo "[dev-with-db] Starting Nephthys in dev mode with local Postgres"
 
