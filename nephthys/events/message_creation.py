@@ -290,8 +290,8 @@ async def on_app_mention(event: Dict[str, Any], client: AsyncWebClient):
     quotes = [
         "I'm not a bot, I'm just a bunch of very unorganized code :pf:",
         "Error 404: Funny response not found. Just kidding, I'm hilarious",
-        "Did you know that #hackanomous is a YSWS by Rohan? :rohanpet: ",
-        "The mac mini which self hosted me can run 24/7 without any downtime (hopefully :disappointed:",
+        "Did you know that #haj4ever is a YSWS by Flux3tor? :pet-flux3tor: ",
+        "The server which hosted me can run 24/7 without any downtime (hopefully :disappointed:",
         "If I have a a ping for every time I was mentioned, I'd have... uhh well, a lot of pings :why:",
         "My hobbies include processing events and daydreaming about uhh idk :idk:",
         "I'm not lazy, I'm just on energy-saving mode :good-night: :hehee: /hj",

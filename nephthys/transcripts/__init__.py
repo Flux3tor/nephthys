@@ -5,6 +5,7 @@ from nephthys.transcripts.transcript import Transcript
 from nephthys.transcripts.transcripts.construct import Construct
 from nephthys.transcripts.transcripts.flavortown import Flavortown
 from nephthys.transcripts.transcripts.hackanomous import Hackanomous
+from nephthys.transcripts.transcripts.haj4ever import Haj4ever
 from nephthys.transcripts.transcripts.hctg import Hctg
 from nephthys.transcripts.transcripts.identity import Identity
 from nephthys.transcripts.transcripts.jumpstart import Jumpstart
@@ -17,6 +18,7 @@ transcripts: List[Type[Transcript]] = [
     Identity,
     SummerOfMaking,
     Hackanomous,
+    Haj4ever,
     Flavortown,
     Midnight,
     Construct,

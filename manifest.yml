@@ -1,6 +1,6 @@
 {
     "display_information": {
-        "name": "Hackanomoly",
+        "name": "Haj Support",
         "description": "making support teams run smoothly",
         "background_color": "#c47600"
     },
@@ -11,7 +11,7 @@
             "messages_tab_read_only_enabled": true
         },
         "bot_user": {
-            "display_name": "Hackanomoly",
+            "display_name": "Haj Support",
             "always_online": false
         },
     "oauth_config": {
@@ -43,7 +43,7 @@
     },
     "settings": {
         "event_subscriptions": {
-            "request_url": "https://hackanomonly.lamyn.tech/slack/events",
+            "request_url": "https://localhost:3000/slack/events",
             "bot_events": [
                 "app_home_opened",
                 "member_joined_channel",
@@ -54,8 +54,8 @@
         },
         "interactivity": {
             "is_enabled": true,
-            "request_url": "https://hackanomonly.lamyn.tech/slack/events",
-            "message_menu_options_url": "https://hackanomonly.lamyn.tech/slack/events"
+            "request_url": "https://localhost:3000/slack/events",
+            "message_menu_options_url": "https://localhost:3000/slack/events"
         },
         "org_deploy_enabled": false,
         "socket_mode_enabled": false,
